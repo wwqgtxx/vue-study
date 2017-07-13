@@ -81,56 +81,53 @@
       }
     },
     mounted () {
-        this.username = this.$store.state.username
+      this.username = this.$store.state.username
     },
     methods: {
-      do_submit1() {
+      async do_submit1() {
         let data = {
           "username": this.username,
         };
         let json = JSON.stringify(data)
-        axios({
+        try {
+          let response = await axios({
             method: "post",
             url: "/api/user_settings/",
             headers: {
               'Content-Type': 'application/json;charset=UTF-8'
             },
             data: json
-          }
-        ).then(function (response) {
+          })
           console.log(response.data)
-          if(response.data.status === "ok"){
-              this.$store.commit("change_name",this.username)
-          }else{
-              this.username = this.$store.state.username
+          if (response.data.status === "ok") {
+            this.$store.commit("change_name", this.username)
           }
-        }.bind(this)).catch(function (err) {
+        } catch (err) {
           console.log(err)
-          this.username = this.$store.state.username
-        });
+        }
+        this.username = this.$store.state.username
       },
-      do_submit2() {
+      async do_submit2() {
         let data = {
           "password": this.password,
         };
         let json = JSON.stringify(data)
-        axios({
+        try {
+          let response = await axios({
             method: "post",
             url: "/api/user_settings/",
             headers: {
               'Content-Type': 'application/json;charset=UTF-8'
             },
             data: json
-          }
-        ).then(function (response) {
+          })
           console.log(response.data)
-          if(response.data.status === "ok"){
+          if (response.data.status === "ok") {
             this.$store.dispatch("logout")
-          }else{
           }
-        }.bind(this)).catch(function (err) {
+        } catch (err) {
           console.log(err)
-        });
+        }
       },
       do_cls(){
         this.username = ""

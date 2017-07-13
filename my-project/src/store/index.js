@@ -41,20 +41,20 @@ const store = new Vuex.Store({
     //   }, 1000)
     //
     // },
-    logout(context){
-      axios({
+    async logout(context){
+      try {
+        let response = await axios({
           method: "post",
           url: "/api/logout/"
-        }
-      ).then(function (response) {
+        })
         console.log(response.data)
         if(response.data.status === "ok"){
           context.commit('logout')
           route.push("/")
         }
-      }.bind(this)).catch(function (err) {
+      }catch(err) {
         console.log(err)
-      })
+      }
     }
   },
   plugins: [createPersistedState()]

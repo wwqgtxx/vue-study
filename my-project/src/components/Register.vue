@@ -84,32 +84,31 @@
       update_validate_code(this)
     },
     methods: {
-      do_register() {
+      async do_register() {
         let data = {
           "username": this.username,
           "password": this.password,
           "validate_code": this.validate_code
         };
         let json = JSON.stringify(data)
-        axios({
+        try {
+          let response = await axios({
             method: "post",
             url: "/api/register/",
             headers: {
               'Content-Type': 'application/json;charset=UTF-8'
             },
             data: json
-          }
-        ).then(function (response) {
+          })
           console.log(response.data)
-          if(response.data.status === "ok"){
+          if (response.data.status === "ok") {
             this.$router.push("/login")
-          }else{
-            update_validate_code(this)
+            return
           }
-        }.bind(this)).catch(function (err) {
+        } catch (err) {
           console.log(err)
-          update_validate_code(this)
-        });
+        }
+        update_validate_code(this)
       },
       do_cls(){
         this.username = ""

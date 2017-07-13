@@ -56,33 +56,33 @@
       update_validate_code(this)
     },
     methods: {
-      do_login() {
+      async do_login() {
         let data = {
           "username": this.username,
           "password": this.password,
           "validate_code": this.validate_code
         };
         let json = JSON.stringify(data)
-        axios({
-            method: "post",
-            url: "/api/login/",
-            headers: {
-              'Content-Type': 'application/json;charset=UTF-8'
-            },
-            data: json
-          }
-        ).then(function (response) {
+        try{
+          let response = await axios({
+              method: "post",
+              url: "/api/login/",
+              headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+              },
+              data: json
+            }
+          )
           console.log(response.data)
           if(response.data.status === "ok"){
-              this.$store.commit("login",response.data)
-              this.$router.push("/")
-          }else{
-            update_validate_code(this)
+            this.$store.commit("login",response.data)
+            this.$router.push("/")
+            return
           }
-        }.bind(this)).catch(function (err) {
+        }catch(err) {
           console.log(err)
-          update_validate_code(this)
-        });
+        }
+        update_validate_code(this)
       },
       update_validate_code_img(){
         update_validate_code(this)
