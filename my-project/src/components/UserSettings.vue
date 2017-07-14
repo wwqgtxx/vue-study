@@ -6,7 +6,7 @@
         <h1>用户设置</h1>
       </div>
 
-      <div id="alert_area"></div>
+      <warning-alert v-bind:message="warning_message"></warning-alert>
 
       <div>
         <div class="text-left">
@@ -69,6 +69,7 @@
 <script>
   import axios from 'axios'
   import {update_validate_code} from '../common/validate_code'
+  import WarningAlert from './WarningAlert.vue'
   export default {
     name: 'register',
     data () {
@@ -85,6 +86,10 @@
     },
     methods: {
       async do_submit1() {
+        if (this.username === "") {
+          this.warning_message.push("用户名不可为空，请填写用户名。")
+          return;
+        }
         let data = {
           "username": this.username,
         };
@@ -108,6 +113,14 @@
         this.username = this.$store.state.username
       },
       async do_submit2() {
+        if (this.password === "") {
+          this.warning_message.push("密码不可为空，请输入密码。")
+          return;
+        }
+        if (this.password === this.confirm_password) {
+          this.warning_message.push("两次密码输入的不相同，请重新输入。")
+          return;
+        }
         let data = {
           "password": this.password,
         };
@@ -134,6 +147,9 @@
         this.password = ""
         this.confirm_password = ""
       }
+    },
+    components: {
+      "warning-alert": WarningAlert
     }
   }
 </script>

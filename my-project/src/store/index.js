@@ -28,7 +28,8 @@ const store = new Vuex.Store({
       state.role = info.role
     },
     logout(state){
-      state.username = null;
+      state.username = null
+      state.is_admin = false
     },
     change_name(state,username){
       state.username = username

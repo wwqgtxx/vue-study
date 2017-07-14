@@ -6,7 +6,7 @@
         <h1>用户注册</h1>
       </div>
 
-      <div id="alert_area"></div>
+      <warning-alert v-bind:message="warning_message"></warning-alert>
 
       <div>
         <form class="form-horizontal">
@@ -69,6 +69,7 @@
 <script>
   import axios from 'axios'
   import {update_validate_code} from '../common/validate_code'
+  import WarningAlert from './WarningAlert.vue'
   export default {
     name: 'register',
     data () {
@@ -78,6 +79,7 @@
         confirm_password: "",
         validate_code: "",
         validate_code_img: null,
+        warning_message: [],
       }
     },
     mounted () {
@@ -85,6 +87,22 @@
     },
     methods: {
       async do_register() {
+        if (this.username === "") {
+          this.warning_message.push("用户名不可为空，请填写用户名。")
+          return;
+        }
+        if (this.password === "") {
+          this.warning_message.push("密码不可为空，请输入密码。")
+          return;
+        }
+        if (this.password !== this.confirm_password) {
+          this.warning_message.push("两次密码输入的不相同，请重新输入。")
+          return;
+        }
+        if (this.validate_code === "") {
+          this.warning_message.push("验证码不可为空，请输入验证码。")
+          return;
+        }
         let data = {
           "username": this.username,
           "password": this.password,
@@ -119,6 +137,9 @@
       update_validate_code_img(){
         update_validate_code(this)
       }
+    },
+    components: {
+      "warning-alert": WarningAlert
     }
   }
 </script>

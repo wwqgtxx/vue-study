@@ -4,7 +4,7 @@
       <h1>用户登录</h1>
     </div>
 
-    <div id="alert_area"></div>
+    <warning-alert v-bind:message="warning_message"></warning-alert>
 
     <div>
       <form class="form-inline">
@@ -42,6 +42,7 @@
 <script>
   import axios from 'axios'
   import {update_validate_code} from '../common/validate_code'
+  import WarningAlert from './WarningAlert.vue'
   export default {
     name: 'login',
     data () {
@@ -50,6 +51,7 @@
         password: "",
         validate_code: "",
         validate_code_img: null,
+        warning_message: [],
       }
     },
     mounted () {
@@ -57,13 +59,25 @@
     },
     methods: {
       async do_login() {
+        if (this.username === "") {
+          this.warning_message.push("用户名不可为空，请填写用户名。")
+          return;
+        }
+        if (this.password === "") {
+          this.warning_message.push("密码不可为空，请输入密码。")
+          return;
+        }
+        if (this.validate_code === "") {
+          this.warning_message.push("验证码不可为空，请输入验证码。")
+          return;
+        }
         let data = {
           "username": this.username,
           "password": this.password,
           "validate_code": this.validate_code
         };
         let json = JSON.stringify(data)
-        try{
+        try {
           let response = await axios({
               method: "post",
               url: "/api/login/",
@@ -74,12 +88,12 @@
             }
           )
           console.log(response.data)
-          if(response.data.status === "ok"){
-            this.$store.commit("login",response.data)
+          if (response.data.status === "ok") {
+            this.$store.commit("login", response.data)
             this.$router.push("/")
             return
           }
-        }catch(err) {
+        } catch (err) {
           console.log(err)
         }
         update_validate_code(this)
@@ -87,6 +101,9 @@
       update_validate_code_img(){
         update_validate_code(this)
       }
+    },
+    components: {
+      "warning-alert": WarningAlert
     }
   }
 </script>
