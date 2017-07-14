@@ -4,6 +4,7 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import './common/axios_config'
 
 // import $ from "jquery";
 import 'jquery-confirm/dist/jquery-confirm.min.css'
