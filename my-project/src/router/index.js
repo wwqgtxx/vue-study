@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import NotFoundComponent from '../components/NotFoundComponent.vue'
 import Index from '../components/Index.vue'
 import TextShow from '../components/TextShow.vue'
 import FallBack from '../components/FallBack.vue'
@@ -9,6 +10,7 @@ import UserSettings from '../components/UserSettings.vue'
 Vue.use(Router)
 
 export default new Router({
+  mode: 'history',
   routes: [
     {
       path: '/',
@@ -58,6 +60,10 @@ export default new Router({
       path: '/3',
       name: 'Hello3',
       component: Index
+    },
+    {
+      path: '*',
+      component: NotFoundComponent
     }
   ],
   linkActiveClass: "active"

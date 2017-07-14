@@ -30,7 +30,7 @@ from flask_babelex import Babel
 from flask_socketio import SocketIO, emit, disconnect, join_room, leave_room
 from flask_session import Session
 
-app = Flask(__name__,static_folder='../my-project/dist/static', template_folder='../my-project/dist')
+app = Flask(__name__, static_folder='../my-project/dist/static', template_folder='../my-project/dist')
 babel = Babel(app)
 app.config['BABEL_DEFAULT_LOCALE'] = 'zh_CN'
 app.secret_key = os.urandom(24)
@@ -60,6 +60,11 @@ admin.add_view(user_view)
 @app.route('/')
 def index():
     return render_template("index.html")
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("index.html"), 200
 
 
 def main(host="0.0.0.0", port=8070):
