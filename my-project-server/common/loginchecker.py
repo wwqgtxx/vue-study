@@ -45,7 +45,7 @@ except ImportError:
     logger.warning("can't import flask_admin")
     flask_admin = None
 
-from common.csrfprotect import csrf_protect
+from common.csrfprotect import csrf_protect, csrf_protect_ajax, get_csrf_token
 from common.validate_code import check_validate_code, is_validate_code_wrong
 
 
@@ -308,6 +308,7 @@ class LoginChecker(object):
                         data["is_admin"] = self.is_admin
                         data["role"] = self.role
                         data["uid"] = self.signed_uid
+                        data["_csrf_token"] = get_csrf_token()
                         resp = flask.make_response(flask.jsonify(data))
                         self.save_login_info_to_cookie(resp)
                         return resp
@@ -350,6 +351,7 @@ class LoginChecker(object):
             return flask.jsonify(data)
 
         @app.route('/api/user_settings/', methods=['POST'])
+        @csrf_protect_ajax
         @self.need_login
         def user_settings():
             data = {"status": "error"}
@@ -388,7 +390,8 @@ class LoginChecker(object):
                  "username": self.username,
                  "is_admin": self.is_admin,
                  "role": self.role,
-                 "uid": self.signed_uid})
+                 "uid": self.signed_uid
+                 })
 
     @property
     def is_admin(self):

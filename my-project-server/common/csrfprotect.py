@@ -127,7 +127,10 @@ def csrf_init(app, on_csrf=None):
                 if not csrf_token or not _csrf_token or csrf_token != _csrf_token:
                     if on_csrf:
                         on_csrf(*app.match_request())
-                    flask.abort(400)
+                    data = {"status": "error", "reason": "error_csrf_token"}
+                    response = flask.make_response(flask.jsonify(data))
+                    return response
+                    # flask.abort(400)
         except NotFound:
             pass
 

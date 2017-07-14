@@ -9,6 +9,7 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
   state: {
     // count: 0,
+    _csrf_token:"",
     username: null,
     is_admin: false,
     role: "",
@@ -23,6 +24,7 @@ const store = new Vuex.Store({
     //   state.count++
     // },
     login(state, info){
+      state._csrf_token = info._csrf_token
       state.username = info.username
       state.is_admin = info.is_admin
       state.role = info.role

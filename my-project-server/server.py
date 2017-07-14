@@ -40,12 +40,14 @@ socketio = SocketIO(app, async_mode=async_mode, engineio_logger=True)
 
 from common.loginchecker import login_checker, user_view, ReturnType, NeedLoginViewMixin
 from common.validate_code import validate_code_init
+from common.csrfprotect import csrf_init
 from common.utils import DefaultNamespace
 
 namespace = DefaultNamespace()
 
 login_checker.init_view(app)
 validate_code_init(app)
+csrf_init(app)
 
 
 class MyHomeView(NeedLoginViewMixin, AdminIndexView):
