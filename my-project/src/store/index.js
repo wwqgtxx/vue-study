@@ -31,7 +31,7 @@ const store = new Vuex.Store({
       state.username = null
       state.is_admin = false
     },
-    change_name(state,username){
+    change_name(state, username){
       state.username = username
     }
   },
@@ -42,6 +42,31 @@ const store = new Vuex.Store({
     //   }, 1000)
     //
     // },
+    async check_login(context){
+      try {
+        let response = await axios({
+          method: "post",
+          url: "/api/check_login/"
+        })
+        console.log(response.data)
+        if (response.data.status === "ok") {
+          let result = response.data.result
+          switch (result) {
+            case "is_login": {
+              context.commit('login', response.data)
+              break
+            }
+            default: {
+              context.commit('logout')
+              break
+            }
+          }
+
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    },
     async logout(context){
       try {
         let response = await axios({
@@ -49,11 +74,11 @@ const store = new Vuex.Store({
           url: "/api/logout/"
         })
         console.log(response.data)
-        if(response.data.status === "ok"){
+        if (response.data.status === "ok") {
           context.commit('logout')
           route.push("/")
         }
-      }catch(err) {
+      } catch (err) {
         console.log(err)
       }
     }

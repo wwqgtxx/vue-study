@@ -79,6 +79,7 @@
         confirm_password: "",
         validate_code: "",
         validate_code_img: null,
+        warning_message: [],
       }
     },
     mounted () {
@@ -138,7 +139,23 @@
           if (response.data.status === "ok") {
             this.$store.dispatch("logout")
           }
+          else {
+            let reason = response.data.reason
+            this.warning_message.splice(0)
+            switch (reason) {
+              case "user_was_exist": {
+                this.warning_message.push("用户名已存在，请输入其他用户名。")
+                break
+              }
+              default: {
+                this.warning_message.push("未知错误")
+                break
+              }
+            }
+          }
         } catch (err) {
+          this.warning_message.splice(0)
+          this.warning_message.push("未知错误")
           console.log(err)
         }
       },

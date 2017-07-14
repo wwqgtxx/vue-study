@@ -123,7 +123,31 @@
             this.$router.push("/login")
             return
           }
+          else {
+            let reason = response.data.reason
+            this.warning_message.splice(0)
+            switch (reason) {
+              case "no_validate_code": {
+                this.warning_message.push("验证码不可为空，请输入验证码。")
+                break
+              }
+              case "error_validate_code": {
+                this.warning_message.push("验证码输入错误，请重新输入验证码。")
+                break
+              }
+              case "user_was_exist": {
+                this.warning_message.push("用户名已存在，请输入其他用户名。")
+                break
+              }
+              default: {
+                this.warning_message.push("未知错误")
+                break
+              }
+            }
+          }
         } catch (err) {
+          this.warning_message.splice(0)
+          this.warning_message.push("未知错误")
           console.log(err)
         }
         update_validate_code(this)

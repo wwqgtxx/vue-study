@@ -50,8 +50,6 @@ from common.validate_code import check_validate_code, is_validate_code_wrong
 
 
 class ReturnType(Enum):
-    ONLY_PARSE_COOKIE = "ONLY_PARSE_COOKIE"
-    REDIRECT = "REDIRECT"
     JSON = "JSON"
     DISCONNECT = "DISCONNECT"
 
@@ -228,149 +226,6 @@ class LoginChecker(object):
                 result = query.execute()
                 logger.info("delete %d timeout data" % result)
 
-    def do_login(self, func, no_check_validate_code=False):
-        @csrf_protect
-        @check_validate_code
-        @functools.wraps(func)
-        def do_login_wrapper(*args, **kwargs):
-            if not no_check_validate_code and is_validate_code_wrong():
-                flask.session["NO_REMOVE_ALERT_COOKIE"] = True
-                response = flask.make_response(flask.redirect(flask.url_for("login")))
-                return response
-            if self.only_post and flask.request.method != "POST":
-                username = None
-                password = None
-            else:
-                username = flask.request.values.get('username', None)
-                password = flask.request.values.get('password', None)
-            if username == '':
-                username = "None"
-            if username:
-                user_info = self.check_user_password(username, password)
-                if user_info:
-                    redirect_from = self.redirect_from
-                    uid = str(uuid.uuid1())
-                    signed_uid = itsdangerous.Signer(user_info.password, salt='LoginChecker:uid').sign(
-                        uid.encode(errors='ignore')).decode(
-                        errors='ignore')
-                    self.signed_uid = signed_uid
-                    self.username = username
-                    self.uid = uid
-                    self.is_admin = user_info.is_admin
-                    self.user_id = user_info.id
-                    self.role = user_info.role
-                    if redirect_from:
-                        del self.redirect_from
-                        response = flask.make_response(flask.redirect(redirect_from))
-                    else:
-                        flask.session["NO_REMOVE_ALERT_COOKIE"] = True
-                        response = flask.make_response(flask.redirect(flask.url_for("login")))
-                        self.save_login_info_to_cookie(response)
-                    self.remove_alert_cookie(response)
-                    if use_mongoengine:
-                        user_login_data = UserLoginData(uid=uid, user=user_info, username=username,
-                                                        timestamp=int(time.time() * 1e3),
-                                                        datetime=datetime.now(),
-                                                        utc_datetime=datetime.utcnow())
-                        user_login_data.save()
-                        logger.info("<username=%s,uid=%s> save login with mongodb" % (username, uid))
-                    elif use_peewee:
-                        with db.execution_context():
-                            UserLoginData.create(uid=uid, user=user_info, username=username,
-                                                 timestamp=int(time.time() * 1e3),
-                                                 datetime=datetime.now(),
-                                                 utc_datetime=datetime.utcnow())
-                            logger.info("<username=%s,uid=%s> save login with peewee" % (username, uid))
-                    return response
-                flask.session["NO_REMOVE_ALERT_COOKIE"] = True
-                response = self.remove_login(flask.make_response(flask.redirect(flask.url_for("login"))))
-                response.set_cookie('WRONG_USERNAME_OR_PASSWORD', "True")
-                return response
-            if self.is_login and self.signed_uid:
-                response = flask.make_response(func(*args, **kwargs))
-                self.save_login_info_to_cookie(response)
-            else:
-                del self.is_login
-                response = flask.make_response(func(*args, **kwargs))
-            if not flask.session.pop("NO_REMOVE_ALERT_COOKIE", False):
-                self.remove_alert_cookie(response)
-            return response
-
-        return do_login_wrapper
-
-    def do_logout(self, func):
-        @functools.wraps(func)
-        def do_logout_wrapper(*args, **kwargs):
-            response = flask.make_response(func(*args, **kwargs))
-            self.remove_alert_cookie(response)
-            return self.remove_login(response)
-
-        return do_logout_wrapper
-
-    def do_register(self, func):
-        @csrf_protect
-        @check_validate_code
-        @functools.wraps(func)
-        def do_register_wrapper(*args, **kwargs):
-            if is_validate_code_wrong():
-                flask.session["NO_REMOVE_ALERT_COOKIE"] = True
-                response = self.remove_login(flask.make_response(flask.redirect(flask.url_for("register"))))
-                return response
-            if self.only_post and flask.request.method != "POST":
-                username = None
-                password = None
-            else:
-                username = flask.request.values.get('username', None)
-                password = flask.request.values.get('password', None)
-            if username:
-                try:
-                    self.add_user(username, password)
-                except UserWasExist:
-                    response = flask.make_response(func(*args, **kwargs))
-                    response.set_cookie('WRONG_USERNAME', "True")
-                    return response
-                response = flask.make_response(self.do_login(func, no_check_validate_code=True)(*args, **kwargs))
-                self.remove_alert_cookie(response)
-                return response
-            response = flask.make_response(func(*args, **kwargs))
-            self.remove_alert_cookie(response)
-            return response
-
-        return do_register_wrapper
-
-    def do_user_settings(self, func):
-        @csrf_protect
-        @self.need_login
-        @functools.wraps(func)
-        def do_user_settings_wrapper(*args, **kwargs):
-            if self.only_post and flask.request.method != "POST":
-                username = None
-                password = None
-            else:
-                username = flask.request.values.get('username', None)
-                password = flask.request.values.get('password', None)
-            if username:
-                response = flask.make_response(func(*args, **kwargs))
-                try:
-                    self.change_username(self.username, username)
-                    self.username = username
-                    response.set_cookie('MEMBER_LOGIN', username)
-                except UserWasExist:
-                    response.set_cookie('WRONG_USERNAME', "True")
-                    return response
-                self.remove_alert_cookie(response)
-                return response
-            if password:
-                self.change_password(self.username, password)
-                response = flask.make_response(flask.redirect(flask.url_for('logout')))
-                self.remove_alert_cookie(response)
-                return response
-            response = flask.make_response(func(*args, **kwargs))
-            self.remove_alert_cookie(response)
-            return response
-
-        return do_user_settings_wrapper
-
     def generate_password_hash(self, password):
         if use_sha3:
             return generate_password_hash(password, method='pbkdf2:sha3_512')
@@ -414,8 +269,10 @@ class LoginChecker(object):
                 password = json.get('password', None)
                 validate_code = json.get('validate_code', None)
                 if not validate_code:
+                    data["reason"] = "no_validate_code"
                     return flask.jsonify(data)
                 if not check_validate_code(validate_code):
+                    data["reason"] = "error_validate_code"
                     return flask.jsonify(data)
                 if username == '':
                     username = "None"
@@ -454,6 +311,9 @@ class LoginChecker(object):
                         resp = flask.make_response(flask.jsonify(data))
                         self.save_login_info_to_cookie(resp)
                         return resp
+                data["reason"] = "error_user"
+            else:
+                data["reason"] = "no_json"
 
             return flask.jsonify(data)
 
@@ -472,20 +332,25 @@ class LoginChecker(object):
                 password = json.get('password', None)
                 validate_code = json.get('validate_code', None)
                 if not validate_code:
+                    data["reason"] = "no_validate_code"
                     return flask.jsonify(data)
                 if not check_validate_code(validate_code):
+                    data["reason"] = "error_validate_code"
                     return flask.jsonify(data)
                 if username:
                     try:
                         self.add_user(username, password)
                     except UserWasExist:
+                        data["reason"] = "user_was_exist"
                         return flask.jsonify(data)
                     data["status"] = "ok"
                     return flask.jsonify(data)
+            else:
+                data["reason"] = "no_json"
             return flask.jsonify(data)
 
         @app.route('/api/user_settings/', methods=['POST'])
-        @login_checker.do_user_settings
+        @self.need_login
         def user_settings():
             data = {"status": "error"}
             if flask.request.is_json:
@@ -501,21 +366,29 @@ class LoginChecker(object):
                         self.save_login_info_to_cookie(resp)
                         return resp
                     except UserWasExist:
-                        pass
+                        data["reason"] = "user_was_exist"
                     return flask.jsonify(data)
                 if password:
                     self.change_password(self.username, password)
                     data["status"] = "ok"
                     response = flask.make_response(flask.jsonify(data))
                     return self.remove_login(response)
-                return flask.jsonify(data)
+                data["reason"] = "no_message"
+            else:
+                data["reason"] = "no_json"
+            return flask.jsonify(data)
 
         @app.route('/api/check_login/', methods=['POST', 'GET'])
         def check_login():
             if not self.is_login:
-                return flask.jsonify({"status": "not_login"})
+                return flask.jsonify({"status": "ok", "result": "not_login"})
             return flask.jsonify(
-                {"status": "is_login", "is_admin": self.is_admin, "role": self.role, "uid": self.signed_uid})
+                {"status": "ok",
+                 "result": "is_login",
+                 "username": self.username,
+                 "is_admin": self.is_admin,
+                 "role": self.role,
+                 "uid": self.signed_uid})
 
     @property
     def is_admin(self):
@@ -591,28 +464,19 @@ class LoginChecker(object):
         del self.user_id
         del self.role
 
-    def need_login(self, return_type=ReturnType.REDIRECT, need_admin=False):
+    def need_login(self, return_type=ReturnType.JSON, need_admin=False):
         def decorator(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 if (not self.is_login) or (need_admin and not self.is_admin):
-                    if return_type is ReturnType.REDIRECT:
-                        self.redirect_from = flask.request.url
-                        resp = flask.make_response(flask.redirect(flask.url_for('login')))
-                        self.do_logout(resp)
-                        return resp
-                    elif return_type is ReturnType.ONLY_PARSE_COOKIE:
-                        resp = flask.make_response(func(*args, **kwargs))
-                        self.do_logout(resp)
-                        return resp
-                    elif return_type is ReturnType.JSON:
-                        info = {
-                            "lastTimestamp": int(time.time() * 1e3),
-                            "type": "redirect",
-                            "url": flask.url_for('login')
-                        }
-                        resp = flask.make_response(flask.jsonify(info))
-                        self.do_logout(resp)
+                    if return_type is ReturnType.JSON:
+                        data = {"status": "error"}
+                        if not self.is_login:
+                            data["reason"] = "not_login"
+                        else:
+                            data["reason"] = "not_admin"
+                        resp = flask.make_response(flask.jsonify(data))
+                        self.remove_login(resp)
                         return resp
                     elif flask_socketio and return_type is ReturnType.DISCONNECT:
                         return flask_socketio.disconnect()
@@ -629,15 +493,10 @@ class LoginChecker(object):
 
         if callable(return_type):
             func = return_type
-            return_type = ReturnType.REDIRECT
+            return_type = ReturnType.JSON
             return decorator(func)
         else:
             return decorator
-
-    def remove_alert_cookie(self, response):
-        response.delete_cookie('WRONG_USERNAME')
-        response.delete_cookie('WRONG_USERNAME_OR_PASSWORD')
-        return response
 
     def remove_login(self, response):
         username = self.username
@@ -665,18 +524,6 @@ class LoginChecker(object):
             with db.execution_context():
                 query = User.delete().where(User.username == username)  # type:peewee.Query
                 query.execute()
-
-    @property
-    def redirect_from(self):
-        return flask.session.get('LoginChecker:redirect_from', None)
-
-    @redirect_from.setter
-    def redirect_from(self, value):
-        flask.session['LoginChecker:redirect_from'] = value
-
-    @redirect_from.deleter
-    def redirect_from(self):
-        flask.session.pop('LoginChecker:redirect_from', None)
 
     @property
     def role(self):

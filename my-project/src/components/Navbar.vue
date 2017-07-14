@@ -79,6 +79,7 @@
       }
     },
     created () {
+      this.$store.dispatch("check_login")
       let tick = ()=> {
         this.system_time = moment().format('YYYY-MM-DD HH:mm:ss')
       }
