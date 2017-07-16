@@ -2,7 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import NotFoundComponent from '../components/NotFoundComponent.vue'
 import Index from '../components/Index.vue'
-import Test from '../components/Test.vue'
+import TestSocketio from '../components/TestSocketio.vue'
 import TextShow from '../components/TextShow.vue'
 import FallBack from '../components/FallBack.vue'
 import Login from '../components/Login.vue'
@@ -49,8 +49,8 @@ export default new Router({
     },
     {
       path: '/1',
-      name: 'Test',
-      component: Test
+      name: 'TestSocketio',
+      component: TestSocketio
     },
     {
       path: '/2',

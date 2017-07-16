@@ -9,29 +9,42 @@
   import moment from 'moment'
   import io from 'socket.io-client'
   import {socketio_check_csrftoken} from '../common/socketio_csrf_helper'
+  import {createDisconnectAlert, createMessageDialog} from '../common/dialog'
   export default {
     name: 'test',
     data () {
       return {
         time: "",
         socket: null,
-        worker: null
+        worker: null,
+        fail_alert: null
       }
     },
     mounted () {
+//      this.$confirm("hello")
       let socket = io("/test")
       this.socket = socket
-      socket.on('connect', function () {
+      socket.on('connect', () => {
+        console.log(this.fail_alert)
+        if (this.fail_alert) {
+          this.fail_alert.close()
+          this.fail_alert = null
+        }
         socketio_check_csrftoken(socket)
       })
-      socket.on('disconnect', function () {
+      socket.on('disconnect', () => {
         console.info("disconnect")
+        if (!this.fail_alert) {
+          this.fail_alert = createDisconnectAlert()
+        }
+        console.log(this.fail_alert)
+
       });
-      socket.on('update_time',(json)=>{
+      socket.on('update_time', (json) => {
         this.time = moment(json.timestamp, "x").format('YYYY-MM-DD HH:mm:ss');
       })
-      let tick = ()=> {
-        socket.emit("gettime",(json)=>{
+      let tick = () => {
+        socket.emit("gettime", (json) => {
           console.log(json)
         })
       }
@@ -39,11 +52,15 @@
       this.worker = setInterval(tick, 1000)
     },
     destroyed(){
+      if (this.fail_alert) {
+        this.fail_alert.close()
+      }
+      this.fail_alert = true
+      if (this.worker) {
+        clearInterval(this.worker)
+      }
       if (this.socket) {
         this.socket.close()
-      }
-      if (this.worker){
-        clearInterval(this.worker)
       }
     },
     methods: {}

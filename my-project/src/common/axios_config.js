@@ -12,22 +12,26 @@ axios.interceptors.request.use(
     return Promise.reject(err);
   });
 
-// // http response 拦截器
-// axios.interceptors.response.use(
-//   response => {
-//     return response;
-//   },
-//   error => {
-//     if (error.response) {
-//       switch (error.response.status) {
-//         case 401:
-//           // 返回 401 清除token信息并跳转到登录页面
-//           store.commit(types.LOGOUT);
-//           router.replace({
-//             path: 'login',
-//             query: {redirect: router.currentRoute.fullPath}
-//           })
-//       }
-//     }
-//     return Promise.reject(error.response.data)   // 返回接口返回的错误信息
-//   });
+// http response 拦截器
+axios.interceptors.response.use(
+  response => {
+    let _csrf_token = response.headers["X-CSRFToken"] || response.headers["x-csrftoken"]
+    if (_csrf_token){
+      store.commit("update_csrf_token",_csrf_token)
+    }
+    return response;
+  },
+  error => {
+    // if (error.response) {
+    //   switch (error.response.status) {
+    //     case 401:
+    //       // 返回 401 清除token信息并跳转到登录页面
+    //       store.commit(types.LOGOUT);
+    //       router.replace({
+    //         path: 'login',
+    //         query: {redirect: router.currentRoute.fullPath}
+    //       })
+    //   }
+    // }
+    return Promise.reject(error.response.data)   // 返回接口返回的错误信息
+  });

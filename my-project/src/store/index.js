@@ -37,7 +37,11 @@ const store = new Vuex.Store({
     },
     change_name(state, username){
       state.username = username
-    }
+    },
+    update_csrf_token(state,_csrf_token){
+      state._csrf_token = _csrf_token
+    },
+
   },
   actions: {
     // increment (context) {

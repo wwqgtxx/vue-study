@@ -72,11 +72,11 @@ def csrf_protect_socketio(socketio_type=SocketIOType.NORMAL, socketio=None, name
 def csrf_init(app, on_csrf=None):
     """
     use by
-    
-    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" /> 
-    
+
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+
     or
-    
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script type="text/javascript">
         // var csrftoken = $('meta[name=csrf-token]').attr('content');
@@ -86,7 +86,7 @@ def csrf_init(app, on_csrf=None):
         function parse_csrf_token_input(){
             $("input[name='_csrf_token']").val(get_csrftoken());
         }
-        
+
         $(document).ready(function () {
             $.ajaxSetup({
                 beforeSend: function (xhr, settings) {
@@ -98,15 +98,15 @@ def csrf_init(app, on_csrf=None):
             parse_csrf_token_input();
         });
     </script>
-    
+
     or
-    
+
     <script type="text/javascript">
         var csrftoken = "{{ csrf_token() }}"
     </script>
-    :param app: 
-    :param on_csrf: 
-    :return: 
+    :param app:
+    :param on_csrf:
+    :return:
     """
 
     @app.before_request
@@ -139,6 +139,10 @@ def csrf_init(app, on_csrf=None):
         if response and isinstance(response, flask.Response):
             _csrf_token = get_csrf_token()
             response.set_cookie("X-CSRFToken", _csrf_token)
+            response.headers["X-CSRFToken"] = _csrf_token
+            # not add this!!!
+            # # response.headers['Access-Control-Expose-Headers'] = "X-CSRFToken"
+            # it well cause the other origin get the X-CSRFToken
         return response
 
     app.jinja_env.globals['csrf_token'] = get_csrf_token
