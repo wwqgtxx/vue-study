@@ -40,7 +40,7 @@ socketio = SocketIO(app, async_mode=async_mode, engineio_logger=True)
 
 from common.loginchecker import login_checker, user_view, ReturnType, NeedLoginViewMixin
 from common.validate_code import validate_code_init
-from common.csrfprotect import csrf_init
+from common.csrfprotect import csrf_init, csrf_protect_socketio, SocketIOType
 from common.utils import DefaultNamespace
 
 namespace = DefaultNamespace()
@@ -67,6 +67,25 @@ def index():
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template("index.html"), 200
+
+
+@socketio.on("connect", namespace="/test")
+@login_checker.need_login(ReturnType.DISCONNECT)
+@csrf_protect_socketio(SocketIOType.CONNECT, socketio=socketio, namespace="/test")
+def socketio_test_connect():
+    logger.info(login_checker.user_id)
+
+
+@socketio.on("disconnect", namespace="/test")
+def socketio_test_disconnect():
+    logger.info(login_checker.user_id)
+
+
+@socketio.on("gettime", namespace="/test")
+@csrf_protect_socketio
+def socketio_test_gettime():
+    emit("update_time", {"timestamp": int(time.time() * 1e3)})
+    return {"status": "ok"}
 
 
 def main(host="0.0.0.0", port=8070):
