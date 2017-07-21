@@ -44,3 +44,8 @@ if use_peewee:
     class BaseModel(peewee.Model):
         class Meta:
             database = db
+
+if use_mongoengine:
+    import mongoengine
+
+    mongoengine.connect(db="TestServer")

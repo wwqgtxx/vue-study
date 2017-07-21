@@ -17,7 +17,6 @@ import itsdangerous
 from datetime import datetime, timedelta
 from enum import Enum
 from werkzeug.security import check_password_hash, generate_password_hash
-from jinja2.exceptions import TemplateNotFound
 from common.utils import logger, DefaultNamespace
 from common.db_config import use_mongoengine, use_peewee
 

@@ -90,7 +90,12 @@
           console.log(response.data)
           if (response.data.status === "ok") {
             this.$store.commit("login", response.data)
-            this.$router.push("/")
+            if (this.$route.query.redirect) {
+              this.$router.push(this.$route.query.redirect)
+            }
+            else {
+              this.$router.push("/")
+            }
             return
           }
           else {

@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
+import store from '../store'
 import NotFoundComponent from '../components/NotFoundComponent.vue'
 import Index from '../components/Index.vue'
 import TestSocketio from '../components/TestSocketio.vue'
@@ -10,13 +11,16 @@ import Register from '../components/Register.vue'
 import UserSettings from '../components/UserSettings.vue'
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
   mode: 'history',
   routes: [
     {
       path: '/',
       // name: 'Index',
       component: Index,
+      meta: {
+        requireAuth: true,  // 添加该字段，表示进入这个路由是需要登录的
+      },
       children: [
         {
           path: 'page/6',
@@ -45,6 +49,9 @@ export default new Router({
     {
       path: '/user_settings',
       name: 'UserSettings',
+      meta: {
+        requireAuth: true,  // 添加该字段，表示进入这个路由是需要登录的
+      },
       component: UserSettings
     },
     {
@@ -68,4 +75,23 @@ export default new Router({
     }
   ],
   linkActiveClass: "active"
+})
+
+export default router
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.requireAuth) {  // 判断该路由是否需要登录权限
+    if (store.state.username) {  // 通过vuex state获取当前的username是否存在
+      next();
+    }
+    else {
+      next({
+        path: '/login',
+        query: {redirect: to.fullPath}  // 将跳转的路由path作为参数，登录成功后跳转到该路由
+      })
+    }
+  }
+  else {
+    next();
+  }
 })

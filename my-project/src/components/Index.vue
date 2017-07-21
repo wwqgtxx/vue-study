@@ -23,14 +23,15 @@
   import moment from 'moment'
   import Cookie from 'js-cookie'
   import json from "../json/index_data.json"
+
   export default {
     name: 'index',
-    data () {
+    data() {
       return {
         nav_item_texts: json["nav_item_texts"],
       }
     },
-    mounted () {
+    mounted() {
 
     },
     methods: {}
